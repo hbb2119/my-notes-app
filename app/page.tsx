@@ -4,11 +4,10 @@ import { supabase } from '../lib/supabase'
 
 
 export default function Home() {
-  const [notes, setNotes] = useState([])
-  const [title, setTitle] = useState('')
+  const [notes, setNotes] = useState<Array<{id: number, title: string, content: string, created_at: string}>>([])  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   // editing function
-  const [editingNoteId, setEditingNoteID] = useState(null)
+  const [editingNoteId, setEditingNoteID] = useState<number | null>(null)
 
   // Load notes when page loads
   useEffect(() => {
