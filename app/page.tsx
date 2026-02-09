@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-
 export default function Home() {
-  const [notes, setNotes] = useState<Array<{id: number, title: string, content: string, created_at: string}>>([])  const [title, setTitle] = useState('')
+  const [notes, setNotes] = useState<any[]>([])
+  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  // editing function
   const [editingNoteId, setEditingNoteID] = useState<number | null>(null)
 
   // Load notes when page loads
@@ -25,49 +24,49 @@ export default function Home() {
   }
 
   async function handleSubmit() {
-  if (!title || !content) {
-    console.log('Title or content is empty')
-    return
-  }
-
-  console.log('Attempting to create note:', { title, content })
-
-  let data, error
+    if (!title || !content) return
 
     if (editingNoteId) {
-      const { data,  error } = await supabase
+      // UPDATE existing note
+      const { error } = await supabase
         .from('notes')
         .update({ title, content })
         .eq('id', editingNoteId)
+      
+      if (error) {
+        console.error('Error updating:', error)
+        return
+      }
+      
+      setTitle('')
+      setContent('')
+      setEditingNoteID(null)
+      
     } else {
-      const { data, error } = await supabase
+      // CREATE new note
+      const { error } = await supabase
         .from('notes')
-        .insert([{ title, content }]) 
+        .insert([{ title, content }])
+      
+      if (error) {
+        console.error('Error creating:', error)
+        return
+      }
+      
+      setTitle('')
+      setContent('')
+    }
     
-  }
-  
-  console.log('Response:', { data, error })
-
-  if (error) {
-    console.error('Error creating note:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
-  } else {
-    console.log('Note created successfully!', data)
-    setTitle('')
-    setContent('')
     fetchNotes()
   }
-}
 
+  function startEditing(note: any) {
+    setEditingNoteID(note.id)
+    setTitle(note.title)
+    setContent(note.content)
+  }
 
-
-function startEditing(note) {
-  setEditingNoteID(note.id)
-  setTitle(note.title)
-  setContent(note.content)
-}
-
-  async function deleteNote(id) {
+  async function deleteNote(id: number) {
     const { error } = await supabase
       .from('notes')
       .delete()
@@ -100,9 +99,9 @@ function startEditing(note) {
           onClick={handleSubmit}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
-          {editingNoteId  ? 'Update Note' : 'Create Note'}
+          {editingNoteId ? 'Update Note' : 'Add Note'}
         </button>
-      </div>  
+      </div>
 
       {/* Display notes */}
       <div className="space-y-4">
@@ -111,16 +110,16 @@ function startEditing(note) {
             <h2 className="text-xl font-semibold">{note.title}</h2>
             <p className="text-gray-600 mt-2">{note.content}</p>
             <button
+              onClick={() => startEditing(note)}
+              className="mt-2 mr-2 text-blue-500 hover:text-blue-700"
+            >
+              Edit
+            </button>
+            <button
               onClick={() => deleteNote(note.id)}
               className="mt-2 text-red-500 hover:text-red-700"
             >
               Delete
-            </button>
-            <button
-              onClick={() => startEditing(note)}
-              className="mt-2 ml-4 text-green-500 hover:text-green-700"
-            >
-              Edit
             </button>
           </div>
         ))}
